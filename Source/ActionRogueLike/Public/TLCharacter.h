@@ -8,6 +8,8 @@
 
 class USpringArmComponent;
 class UCameraComponent;
+class UTLInteractionComponent;
+class UAnimMontage;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
@@ -16,8 +18,11 @@ class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
 
 protected:
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category="Attack")
+	UAnimMontage* AttackAnim;
 
 public:
 	// Sets default values for this character's properties
@@ -33,10 +38,17 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UCameraComponent* CameraComp;
 
+	UPROPERTY(VisibleAnywhere)
+	UTLInteractionComponent* InteractionComp;
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
 	void PrimaryAttack();
+	void PrimaryInteract();
+
+	FTimerHandle TimerHandle_PrimaryAttack;
+	void PrimaryAttack_TimeElapsed();
 
 public:	
 	// Called every frame
