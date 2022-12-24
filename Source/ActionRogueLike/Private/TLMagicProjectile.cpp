@@ -2,6 +2,8 @@
 
 
 #include "TLMagicProjectile.h"
+
+#include "TLAttributeComponent.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Particles/ParticleSystemComponent.h"
@@ -14,6 +16,7 @@ ATLMagicProjectile::ATLMagicProjectile()
 
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
 	SphereComp->SetCollisionProfileName("Projectile");
+	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ATLMagicProjectile::OnActorOverlap);
 	RootComponent = SphereComp;
 
 	ParticleSystemComp = CreateDefaultSubobject<UParticleSystemComponent>("ParticleSystemComp");
@@ -31,6 +34,20 @@ void ATLMagicProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	
+}
+
+void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if(OtherActor && OtherActor != GetInstigator())
+	{
+		UTLAttributeComponent* AttributeComp = Cast< UTLAttributeComponent>(OtherActor->GetComponentByClass(UTLAttributeComponent::StaticClass()));
+
+		if(AttributeComp)
+		{
+			AttributeComp->ApplyHealthChange(-20.0f);
+			Destroy();
+		}
+	}
 }
 
 // Called every frame

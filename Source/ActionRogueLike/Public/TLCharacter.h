@@ -10,6 +10,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UTLInteractionComponent;
 class UAnimMontage;
+class UTLAttributeComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
@@ -40,6 +41,9 @@ protected:
 
 	UPROPERTY(VisibleAnywhere)
 	UTLInteractionComponent* InteractionComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UTLAttributeComponent* AttributeComp;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
