@@ -22,8 +22,32 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
 
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> BlackHoleProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	TSubclassOf<AActor> DashProjectileClass;
+
 	UPROPERTY(EditAnywhere, Category="Attack")
 	UAnimMontage* AttackAnim;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	float AttackAnimDelay;
+
+	void PrimaryAttack();
+	void PrimaryAttack_TimeElapsed();
+	FTimerHandle TimerHandle_PrimaryAttack;
+
+	void BlackHoleAttack();
+	void BlackholeAttack_TimeElapsed();
+	FTimerHandle TimerHandle_BlackholeAttack;
+
+	void Dash();
+	void Dash_TimeElapsed();
+	FTimerHandle TimerHandle_Dash;
+
+	// Re-use spawn logic between attacks
+	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);
 
 public:
 	// Sets default values for this character's properties
@@ -48,11 +72,7 @@ protected:
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 
-	void PrimaryAttack();
 	void PrimaryInteract();
-
-	FTimerHandle TimerHandle_PrimaryAttack;
-	void PrimaryAttack_TimeElapsed();
 
 public:	
 	// Called every frame

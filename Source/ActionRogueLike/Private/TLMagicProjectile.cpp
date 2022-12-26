@@ -5,35 +5,14 @@
 
 #include "TLAttributeComponent.h"
 #include "Components/SphereComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
-#include "Particles/ParticleSystemComponent.h"
+
 
 // Sets default values
 ATLMagicProjectile::ATLMagicProjectile()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
-	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
-	SphereComp->SetCollisionProfileName("Projectile");
+	SphereComp->SetSphereRadius(20.0f);
 	SphereComp->OnComponentBeginOverlap.AddDynamic(this, &ATLMagicProjectile::OnActorOverlap);
-	RootComponent = SphereComp;
-
-	ParticleSystemComp = CreateDefaultSubobject<UParticleSystemComponent>("ParticleSystemComp");
-	ParticleSystemComp->SetupAttachment(SphereComp);
-
-	ProjectileMovementComp = CreateDefaultSubobject<UProjectileMovementComponent>("ProjectileMovementComp");
-	ProjectileMovementComp->InitialSpeed = 1000.0f;
-	ProjectileMovementComp->bRotationFollowsVelocity = true;
-	ProjectileMovementComp->bInitialVelocityInLocalSpace = true;
-	ProjectileMovementComp->ProjectileGravityScale = 0.0f;
-}
-
-// Called when the game starts or when spawned
-void ATLMagicProjectile::BeginPlay()
-{
-	Super::BeginPlay();
-	
+	DamageAmount = 20.0f;
 }
 
 void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -44,16 +23,12 @@ void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent
 
 		if(AttributeComp)
 		{
-			AttributeComp->ApplyHealthChange(-20.0f);
-			Destroy();
+			// minus in front of DamageAmount to apply the change as damage, not healing
+			AttributeComp->ApplyHealthChange(-DamageAmount);
+
+			// Only explode when we hit something valid
+			Explode();
 		}
 	}
-}
-
-// Called every frame
-void ATLMagicProjectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 }
 
