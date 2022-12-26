@@ -52,8 +52,12 @@ void ATLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("Dash", IE_Pressed, this, &ATLCharacter::Dash);
 
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ATLCharacter::PrimaryInteract);
+}
 
-	
+void ATLCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	AttributeComp->OnHealthChanged.AddDynamic(this, &ATLCharacter::OnHealthChanged);
 }
 
 // Called when the game starts or when spawned
@@ -179,6 +183,15 @@ void ATLCharacter::PrimaryInteract()
 	if(InteractionComp)
 	{
 		InteractionComp->PrimaryInteract();
+	}
+}
+
+void ATLCharacter::OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta)
+{
+	if(NewHealth <= 0.0f && Delta < 0.0f)
+	{
+		APlayerController* PC = Cast<APlayerController>(GetController());
+		DisableInput(PC);
 	}
 }
 
