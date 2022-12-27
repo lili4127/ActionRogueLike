@@ -11,6 +11,7 @@ class UCameraComponent;
 class UTLInteractionComponent;
 class UAnimMontage;
 class UTLAttributeComponent;
+class UParticleSystem;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
@@ -18,6 +19,13 @@ class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
 	GENERATED_BODY()
 
 protected:
+
+	/* VisibleAnywhere = read-only, still useful to view in-editor and enforce a convention. */
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName TimeToHitParamName;
+
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HandSocketName;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
@@ -30,6 +38,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, Category="Attack")
 	UAnimMontage* AttackAnim;
+
+	/* Particle System played during attack animation */
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	UParticleSystem* CastingEffect;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
 	float AttackAnimDelay;
@@ -45,6 +57,8 @@ protected:
 	void Dash();
 	void Dash_TimeElapsed();
 	FTimerHandle TimerHandle_Dash;
+
+	void StartAttackEffects();
 
 	// Re-use spawn logic between attacks
 	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);

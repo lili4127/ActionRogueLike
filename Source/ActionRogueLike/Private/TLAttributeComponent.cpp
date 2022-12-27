@@ -6,7 +6,8 @@
 // Sets default values for this component's properties
 UTLAttributeComponent::UTLAttributeComponent()
 {
-	Health = 100.0f;
+	HealthMax = 100;
+	Health = HealthMax;
 }
 
 
@@ -21,13 +22,27 @@ void UTLAttributeComponent::BeginPlay()
 
 bool UTLAttributeComponent::ApplyHealthChange(float Delta)
 {
-	Health += Delta;
-	OnHealthChanged.Broadcast(nullptr, this, Health, Delta);
-	return true;
+	float OldHealth = Health;
+	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
+
+	float ActualDelta = Health - OldHealth;
+	OnHealthChanged.Broadcast(nullptr, this, Health, ActualDelta); // @fixme: Still nullptr for InstigatorActor parameter
+
+	return ActualDelta != 0;
 }
 
 bool UTLAttributeComponent::IsAlive() const
 {
 	return Health > 0.0f;
+}
+
+bool UTLAttributeComponent::IsFullHealth() const
+{
+	return Health == HealthMax;
+}
+
+float UTLAttributeComponent::GetHealthMax() const
+{
+	return HealthMax;
 }
 

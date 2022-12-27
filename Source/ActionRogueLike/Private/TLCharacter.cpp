@@ -9,6 +9,7 @@
 #include "TLAttributeComponent.h"
 #include "TLInteractionComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 ATLCharacter::ATLCharacter()
@@ -30,6 +31,10 @@ ATLCharacter::ATLCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 
 	bUseControllerRotationYaw = false;
+
+	AttackAnimDelay = 0.2f;
+	TimeToHitParamName = "TimeToHit";
+	HandSocketName = "Muzzle_01";
 
 }
 
@@ -64,7 +69,6 @@ void ATLCharacter::PostInitializeComponents()
 void ATLCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	AttackAnimDelay = 0.2f;
 }
 
 void ATLCharacter::MoveForward(float Value)
@@ -93,7 +97,7 @@ void ATLCharacter::MoveRight(float Value)
 
 void ATLCharacter::PrimaryAttack()
 {
-	PlayAnimMontage(AttackAnim);
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimerHandle_PrimaryAttack, this, &ATLCharacter::PrimaryAttack_TimeElapsed, AttackAnimDelay);
 }
 
@@ -105,8 +109,7 @@ void ATLCharacter::PrimaryAttack_TimeElapsed()
 
 void ATLCharacter::BlackHoleAttack()
 {
-	PlayAnimMontage(AttackAnim);
-
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimerHandle_BlackholeAttack, this, &ATLCharacter::BlackholeAttack_TimeElapsed, AttackAnimDelay);
 }
 
@@ -119,8 +122,7 @@ void ATLCharacter::BlackholeAttack_TimeElapsed()
 
 void ATLCharacter::Dash()
 {
-	PlayAnimMontage(AttackAnim);
-
+	StartAttackEffects();
 	GetWorldTimerManager().SetTimer(TimerHandle_Dash, this, &ATLCharacter::Dash_TimeElapsed, AttackAnimDelay);
 }
 
@@ -131,11 +133,17 @@ void ATLCharacter::Dash_TimeElapsed()
 }
 
 
+void ATLCharacter::StartAttackEffects()
+{
+	PlayAnimMontage(AttackAnim);
+	UGameplayStatics::SpawnEmitterAttached(CastingEffect, GetMesh(), HandSocketName, FVector::ZeroVector, FRotator::ZeroRotator, EAttachLocation::SnapToTarget);
+}
+
 void ATLCharacter::SpawnProjectile(TSubclassOf<AActor> ClassToSpawn)
 {
 	if (ensureAlways(ClassToSpawn))
 	{
-		FVector HandLocation = GetMesh()->GetSocketLocation("Muzzle_01");
+		FVector HandLocation = GetMesh()->GetSocketLocation(HandSocketName);
 
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
@@ -188,6 +196,12 @@ void ATLCharacter::PrimaryInteract()
 
 void ATLCharacter::OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta)
 {
+
+	if (Delta < 0.0f)
+	{
+		GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
+	}
+
 	if(NewHealth <= 0.0f && Delta < 0.0f)
 	{
 		APlayerController* PC = Cast<APlayerController>(GetController());
