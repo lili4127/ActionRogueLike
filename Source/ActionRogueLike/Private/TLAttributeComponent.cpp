@@ -10,6 +10,27 @@ UTLAttributeComponent::UTLAttributeComponent()
 	Health = HealthMax;
 }
 
+UTLAttributeComponent* UTLAttributeComponent::GetAttributes(AActor* FromActor)
+{
+	if(FromActor)
+	{
+		return Cast<UTLAttributeComponent>(FromActor->GetComponentByClass(UTLAttributeComponent::StaticClass()));
+	}
+
+	return nullptr;
+}
+
+bool UTLAttributeComponent::IsActorAlive(AActor* Actor)
+{
+	UTLAttributeComponent* AttributeComp = GetAttributes(Actor);
+	if(AttributeComp)
+	{
+		return AttributeComp->IsAlive();
+	}
+
+	return false;
+}
+
 
 // Called when the game starts
 void UTLAttributeComponent::BeginPlay()
@@ -20,13 +41,13 @@ void UTLAttributeComponent::BeginPlay()
 	
 }
 
-bool UTLAttributeComponent::ApplyHealthChange(float Delta)
+bool UTLAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {
 	float OldHealth = Health;
 	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 
 	float ActualDelta = Health - OldHealth;
-	OnHealthChanged.Broadcast(nullptr, this, Health, ActualDelta); // @fixme: Still nullptr for InstigatorActor parameter
+	OnHealthChanged.Broadcast(InstigatorActor, this, Health, ActualDelta);
 
 	return ActualDelta != 0;
 }

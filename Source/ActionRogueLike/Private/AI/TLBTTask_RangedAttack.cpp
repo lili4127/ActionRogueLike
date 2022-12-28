@@ -2,9 +2,16 @@
 
 
 #include "AI/TLBTTask_RangedAttack.h"
+
+#include "TLAttributeComponent.h"
 #include "AI/TLAIController.h"
 #include "GameFramework/Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
+
+UTLBTTask_RangedAttack::UTLBTTask_RangedAttack()
+{
+	MaxBulletSpread = 4.0f;
+}
 
 EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
@@ -22,6 +29,7 @@ EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& 
 		}
 
 		FVector MuzzleLocation = MyPawn->GetMesh()->GetSocketLocation("Muzzle_01");
+
 		AActor* TargetActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetActor"));
 
 		if(TargetActor == nullptr)
@@ -29,11 +37,23 @@ EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& 
 			return EBTNodeResult::Failed;
 		}
 
+		//if target actor not alive anymore stop shooting
+		if(!UTLAttributeComponent::IsActorAlive(TargetActor))
+		{
+			return EBTNodeResult::Failed;
+		}
+
 		FVector Direction = TargetActor->GetActorLocation() - MuzzleLocation;
 		FRotator MuzzleRotation = Direction.Rotation();
 
+		//make sure enemy doesn't directly laser target player
+		MuzzleRotation.Pitch += FMath::RandRange(0.0f, MaxBulletSpread);
+		MuzzleRotation.Yaw += FMath::RandRange(-MaxBulletSpread, MaxBulletSpread);
+
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.Instigator = MyPawn;
+
 		AActor* NewProj = GetWorld()->SpawnActor<AActor>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
 
 		return NewProj ? EBTNodeResult::Succeeded : EBTNodeResult::Failed;
@@ -41,3 +61,4 @@ EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& 
 
 	return EBTNodeResult::Failed;
 }
+

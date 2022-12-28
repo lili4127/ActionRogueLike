@@ -17,6 +17,12 @@ public:
 	// Sets default values for this component's properties
 	UTLAttributeComponent();
 
+	UFUNCTION(BlueprintCallable, Category="Attributes")
+	static UTLAttributeComponent* GetAttributes(AActor* FromActor);
+
+	UFUNCTION(BlueprintCallable, Category = "Attributes", meta = (DisplayName= "IsAlive"))
+	static bool IsActorAlive(AActor* Actor);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -44,7 +50,7 @@ public:
 	FOnHealthChanged OnHealthChanged;
 
 	UFUNCTION(BlueprintCallable, Category = "Attributes")
-	bool ApplyHealthChange(float Delta);
+	bool ApplyHealthChange(AActor* InstigatorActor, float Delta);
 
 	UFUNCTION(BlueprintCallable)
 	bool IsAlive() const;

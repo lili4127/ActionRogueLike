@@ -7,6 +7,7 @@
 #include "TLAICharacter.generated.h"
 
 class UPawnSensingComponent;
+class UTLAttributeComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLAICharacter : public ACharacter
@@ -19,11 +20,22 @@ public:
 
 protected:
 
+	UPROPERTY(VisibleAnywhere, Category="Effects")
+	FName TimeToHitParamName;
+
+	void SetTargetActor(AActor* NewTarget);
+
 	virtual void PostInitializeComponents() override;
 
 	UPROPERTY(VisibleAnywhere, Category="Components")
 	UPawnSensingComponent* PawnSensingComponent;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UTLAttributeComponent* AttributeComp;
+
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);
+
+	UFUNCTION()
+	void OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta);
 };

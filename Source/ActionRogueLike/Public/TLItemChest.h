@@ -20,9 +20,6 @@ public:
 	// Sets default values for this actor's properties
 	ATLItemChest();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 	UPROPERTY(EditAnywhere)
 	float TargetPitch;
 
@@ -33,8 +30,5 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UStaticMeshComponent* LidMesh;
-
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 };
