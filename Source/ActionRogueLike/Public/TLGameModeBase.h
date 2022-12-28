@@ -46,5 +46,8 @@ public:
 	ATLGameModeBase();
 
 	virtual void StartPlay() override;
+
+	UFUNCTION(Exec)
+	void KillAll();
 	
 };

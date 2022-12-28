@@ -8,6 +8,8 @@
 
 class UPawnSensingComponent;
 class UTLAttributeComponent;
+class UUserWidget;
+class UTLUserWidget;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLAICharacter : public ACharacter
@@ -19,6 +21,11 @@ public:
 	ATLAICharacter();
 
 protected:
+
+	UTLUserWidget* ActiveHealthBar;
+
+	UPROPERTY(EditDefaultsOnly, Category="UI")
+	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
 	UPROPERTY(VisibleAnywhere, Category="Effects")
 	FName TimeToHitParamName;

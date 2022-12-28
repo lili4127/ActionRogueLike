@@ -59,6 +59,11 @@ void ATLCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 	PlayerInputComponent->BindAction("PrimaryInteract", IE_Pressed, this, &ATLCharacter::PrimaryInteract);
 }
 
+void ATLCharacter::HealSelf(float Amount /* = 100 */)
+{
+	AttributeComp->ApplyHealthChange(this, Amount);
+}
+
 void ATLCharacter::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();

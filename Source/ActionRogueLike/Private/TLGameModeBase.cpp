@@ -23,6 +23,21 @@ void ATLGameModeBase::StartPlay()
 	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBots, this, &ATLGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
 }
 
+void ATLGameModeBase::KillAll()
+{
+	for (TActorIterator<ATLAICharacter> It(GetWorld()); It; ++It)
+	{
+		ATLAICharacter* Bot = *It;
+		UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(Bot);
+
+		if (ensure(AttributeComp) && AttributeComp->IsAlive())
+		{
+			AttributeComp->Kill(this); // @fixme: pass in player for kill credit?
+		}
+
+	}
+}
+
 void ATLGameModeBase::SpawnBotTimerElapsed()
 {
 

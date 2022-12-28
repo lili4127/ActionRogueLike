@@ -10,6 +10,8 @@
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/PawnSensingComponent.h"
 #include "BrainComponent.h"
+#include "TLUserWidget.h"
+#include "Blueprint/UserWidget.h"
 
 // Sets default values
 ATLAICharacter::ATLAICharacter()
@@ -54,6 +56,17 @@ void ATLAICharacter::OnHealthChanged(AActor* InstigatorActor, UTLAttributeCompon
 		if(InstigatorActor != this)
 		{
 			SetTargetActor(InstigatorActor);
+		}
+
+		if(ActiveHealthBar == nullptr)
+		{
+			ActiveHealthBar = CreateWidget<UTLUserWidget>(GetWorld(), HealthBarWidgetClass);
+
+			if (ActiveHealthBar)
+			{
+				ActiveHealthBar->AttachedActor = this;
+				ActiveHealthBar->AddToViewport();
+			}
 		}
 
 		GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
