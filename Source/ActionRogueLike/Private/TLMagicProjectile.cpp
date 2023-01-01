@@ -3,9 +3,11 @@
 
 #include "TLMagicProjectile.h"
 
+#include "TLActionComponent.h"
 #include "TLAttributeComponent.h"
 #include "TLGameplayFunctionLibrary.h"
 #include "Components/SphereComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 
 
 // Sets default values
@@ -18,23 +20,22 @@ ATLMagicProjectile::ATLMagicProjectile()
 
 void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	//if(OtherActor && OtherActor != GetInstigator())
-	//{
-	//	UTLAttributeComponent* AttributeComp = Cast< UTLAttributeComponent>(OtherActor->GetComponentByClass(UTLAttributeComponent::StaticClass()));
-
-	//	if(AttributeComp)
-	//	{
-	//		// minus in front of DamageAmount to apply the change as damage, not healing
-	//		AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
-
-	//		// Only explode when we hit something valid
-	//		Explode();
-	//	}
-	//}
-
-	if(UTLGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
+	if(OtherActor && OtherActor != GetInstigator())
 	{
-		Explode();
+		UTLActionComponent* ActionComp = Cast<UTLActionComponent>(OtherActor->GetComponentByClass(UTLActionComponent::StaticClass()));
+
+		if (ActionComp && ActionComp->ActiveGameplayTags.HasTag(ParryTag))
+		{
+			MoveComp->Velocity = -MoveComp->Velocity;
+			SetInstigator(Cast<APawn>(OtherActor));
+			return;
+		}
+
+		//apply damage and impulse
+		if (UTLGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
+		{
+			Explode();
+		}
 	}
 }
 

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "GameplayTagContainer.h"
 #include "TLAction.generated.h"
 
 class UWorld;
@@ -23,14 +24,33 @@ public:
 	FName ActionName;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
-	void StartAction(AActor* Instigator);
+	bool CanStart(AActor* Instigator);
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Action")
+	void StartAction(AActor* Instigator);
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "Action")
 	void StopAction(AActor* Instigator);
+
+	UFUNCTION(BlueprintCallable, Category = "Action")
+	bool IsRunning() const;
 
 	UWorld* GetWorld() const override;
 
+protected:
 
+	UFUNCTION(BlueprintCallable, Category = "Action")
+	UTLActionComponent* GetOwningComponent() const;
+
+	//Tags added to owning actor when activated, removed when action stops
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer GrantsTags;
+
+	//Action can only start if owning actor has none of these tags applied
+	UPROPERTY(EditDefaultsOnly, Category = "Tags")
+	FGameplayTagContainer BlockedTags;
+
+	bool bIsRunning;
 	
 	
 };

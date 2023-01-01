@@ -6,6 +6,7 @@
 #include "AIController.h"
 #include "DrawDebugHelpers.h"
 #include "TLAttributeComponent.h"
+#include "TLActionComponent.h"
 #include "TLCharacter.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Perception/PawnSensingComponent.h"
@@ -20,6 +21,7 @@ ATLAICharacter::ATLAICharacter()
 {
 	PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComponent");
 	AttributeComp = CreateDefaultSubobject<UTLAttributeComponent>("AttributeComp");
+	ActionComp = CreateDefaultSubobject<UTLActionComponent>("ActionComp");
 
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 

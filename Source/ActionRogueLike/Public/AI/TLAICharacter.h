@@ -10,6 +10,7 @@ class UPawnSensingComponent;
 class UTLAttributeComponent;
 class UUserWidget;
 class UTLUserWidget;
+class UTLActionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLAICharacter : public ACharacter
@@ -22,6 +23,15 @@ public:
 
 protected:
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	UTLActionComponent* ActionComp;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPawnSensingComponent* PawnSensingComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UTLAttributeComponent* AttributeComp;
+
 	UTLUserWidget* ActiveHealthBar;
 
 	UPROPERTY(EditDefaultsOnly, Category="UI")
@@ -33,12 +43,6 @@ protected:
 	void SetTargetActor(AActor* NewTarget);
 
 	virtual void PostInitializeComponents() override;
-
-	UPROPERTY(VisibleAnywhere, Category="Components")
-	UPawnSensingComponent* PawnSensingComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UTLAttributeComponent* AttributeComp;
 
 	UFUNCTION()
 	void OnPawnSeen(APawn* Pawn);
