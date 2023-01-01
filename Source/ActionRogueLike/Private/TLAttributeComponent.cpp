@@ -73,6 +73,11 @@ bool UTLAttributeComponent::IsFullHealth() const
 	return Health == HealthMax;
 }
 
+float UTLAttributeComponent::GetHealth() const
+{
+	return Health;
+}
+
 float UTLAttributeComponent::GetHealthMax() const
 {
 	return HealthMax;

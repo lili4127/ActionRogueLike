@@ -20,7 +20,7 @@ void ATLPowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 		return;
 	}
 
-	UTLAttributeComponent* AttributeComp = Cast<UTLAttributeComponent>(InstigatorPawn->GetComponentByClass(UTLAttributeComponent::StaticClass()));
+	UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(InstigatorPawn);
 	// Check if not already at max health
 	if (ensure(AttributeComp) && !AttributeComp->IsFullHealth())
 	{

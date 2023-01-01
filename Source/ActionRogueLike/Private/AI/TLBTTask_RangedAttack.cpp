@@ -28,8 +28,6 @@ EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& 
 			return EBTNodeResult::Failed;
 		}
 
-		FVector MuzzleLocation = MyPawn->GetMesh()->GetSocketLocation("Muzzle_01");
-
 		AActor* TargetActor = Cast<AActor>(OwnerComp.GetBlackboardComponent()->GetValueAsObject("TargetActor"));
 
 		if(TargetActor == nullptr)
@@ -43,10 +41,11 @@ EBTNodeResult::Type UTLBTTask_RangedAttack::ExecuteTask(UBehaviorTreeComponent& 
 			return EBTNodeResult::Failed;
 		}
 
+		FVector MuzzleLocation = MyPawn->GetMesh()->GetSocketLocation("Muzzle_01");
 		FVector Direction = TargetActor->GetActorLocation() - MuzzleLocation;
 		FRotator MuzzleRotation = Direction.Rotation();
 
-		//make sure enemy doesn't directly laser target player
+		// Ignore negative pitch to not hit the floor in front itself
 		MuzzleRotation.Pitch += FMath::RandRange(0.0f, MaxBulletSpread);
 		MuzzleRotation.Yaw += FMath::RandRange(-MaxBulletSpread, MaxBulletSpread);
 
