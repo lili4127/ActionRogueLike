@@ -6,6 +6,8 @@
 #include "DrawDebugHelpers.h"
 #include "TLGameplayInterface.h"
 
+static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("tl.InteractionDebugDraw"), false, TEXT("Enable Debug Lines For Interact Component"), ECVF_Cheat);
+
 // Sets default values for this component's properties
 UTLInteractionComponent::UTLInteractionComponent()
 {
@@ -37,6 +39,9 @@ void UTLInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType
 
 void UTLInteractionComponent::PrimaryInteract()
 {
+
+	bool bDebugDraw = CVarDebugDrawInteraction.GetValueOnGameThread();
+
 	AActor* MyOwner = GetOwner();
 	FVector EyeLocation;
 	FRotator EyeRotation;
@@ -59,6 +64,11 @@ void UTLInteractionComponent::PrimaryInteract()
 
 	for(FHitResult Hit : Hits)
 	{
+		if (bDebugDraw)
+		{
+			DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, LineColor, false, 2.0f);
+		}
+
 		AActor* HitActor = Hit.GetActor();
 		if (HitActor)
 		{
@@ -69,10 +79,12 @@ void UTLInteractionComponent::PrimaryInteract()
 				break;
 			}
 		}
-
-		DrawDebugSphere(GetWorld(), Hit.ImpactPoint, Radius, 32, LineColor, false, 2.0f);
 	}
 
-	DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+	if (bDebugDraw)
+	{
+		DrawDebugLine(GetWorld(), EyeLocation, End, LineColor, false, 2.0f, 0, 2.0f);
+	}
+	
 }
 

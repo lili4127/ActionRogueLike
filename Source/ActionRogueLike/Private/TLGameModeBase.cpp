@@ -9,6 +9,9 @@
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
 #include "EngineUtils.h"
+#include "TLCharacter.h"
+
+static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("tl.SpawnBots"), true, TEXT("Enable spawning of bots via timer"), ECVF_Cheat);
 
 ATLGameModeBase::ATLGameModeBase()
 {
@@ -40,6 +43,11 @@ void ATLGameModeBase::KillAll()
 
 void ATLGameModeBase::SpawnBotTimerElapsed()
 {
+	if(!CVarSpawnBots.GetValueOnGameThread())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Bot Spawning Disabled via cvar 'CVarSpawnBots'."));
+		return;
+	}
 
 	int32 NrOfAliveBots = 0;
 	for (TActorIterator<ATLAICharacter> It(GetWorld()); It; ++It)
@@ -95,4 +103,30 @@ void ATLGameModeBase::OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper
 			DrawDebugSphere(GetWorld(), Locations[0], 50.0f, 20, FColor::Blue, false, 60.0f);
 		}
 	}
+}
+
+void ATLGameModeBase::RespawnPlayerElapsed(AController* Controller)
+{
+	if(ensure(Controller))
+	{
+		Controller->UnPossess();
+		RestartPlayer(Controller);
+	}
+}
+
+void ATLGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
+{
+	ATLCharacter* Player = Cast<ATLCharacter>(VictimActor);
+
+	if(Player)
+	{
+		FTimerHandle TimerHandle_RespawnDelay;
+		FTimerDelegate Delegate;
+		Delegate.BindUFunction(this, "RespawnPlayerElapsed", Player->GetController());
+
+		float RespawnDelay = 2.0f;
+		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDelay, false);
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("OnActorKilled: Victim : %s, Killer : %s"), *GetNameSafe(VictimActor), *GetNameSafe(Killer));
 }

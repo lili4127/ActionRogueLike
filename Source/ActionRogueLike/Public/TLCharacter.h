@@ -9,59 +9,13 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UTLInteractionComponent;
-class UAnimMontage;
 class UTLAttributeComponent;
-class UParticleSystem;
+class UTLActionComponent;
 
 UCLASS()
 class ACTIONROGUELIKE_API ATLCharacter : public ACharacter
 {
 	GENERATED_BODY()
-
-protected:
-
-	/* VisibleAnywhere = read-only, still useful to view in-editor and enforce a convention. */
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName TimeToHitParamName;
-
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName HandSocketName;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> ProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> BlackHoleProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	TSubclassOf<AActor> DashProjectileClass;
-
-	UPROPERTY(EditAnywhere, Category="Attack")
-	UAnimMontage* AttackAnim;
-
-	/* Particle System played during attack animation */
-	UPROPERTY(EditAnywhere, Category = "Attack")
-	UParticleSystem* CastingEffect;
-
-	UPROPERTY(EditDefaultsOnly, Category = "Attack")
-	float AttackAnimDelay;
-
-	void PrimaryAttack();
-	void PrimaryAttack_TimeElapsed();
-	FTimerHandle TimerHandle_PrimaryAttack;
-
-	void BlackHoleAttack();
-	void BlackholeAttack_TimeElapsed();
-	FTimerHandle TimerHandle_BlackholeAttack;
-
-	void Dash();
-	void Dash_TimeElapsed();
-	FTimerHandle TimerHandle_Dash;
-
-	void StartAttackEffects();
-
-	// Re-use spawn logic between attacks
-	void SpawnProjectile(TSubclassOf<AActor> ClassToSpawn);
 
 public:
 	// Sets default values for this character's properties
@@ -80,11 +34,17 @@ protected:
 	UPROPERTY(VisibleAnywhere)
 	UTLInteractionComponent* InteractionComp;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
 	UTLAttributeComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
+	UTLActionComponent* ActionComp;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+
+	void SprintStart();
+	void SprintStop();
 
 	void PrimaryInteract();
 
@@ -92,6 +52,16 @@ protected:
 	void OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta);
 
 	virtual void PostInitializeComponents() override;
+
+	virtual FVector GetPawnViewLocation() const override;
+
+	/* VisibleAnywhere = read-only, still useful to view in-editor and enforce a convention. */
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName TimeToHitParamName;
+
+	void PrimaryAttack();
+	void BlackHoleAttack();
+	void Dash();
 
 public:	
 	// Called every frame

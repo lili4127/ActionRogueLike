@@ -4,6 +4,7 @@
 #include "TLMagicProjectile.h"
 
 #include "TLAttributeComponent.h"
+#include "TLGameplayFunctionLibrary.h"
 #include "Components/SphereComponent.h"
 
 
@@ -17,18 +18,23 @@ ATLMagicProjectile::ATLMagicProjectile()
 
 void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if(OtherActor && OtherActor != GetInstigator())
+	//if(OtherActor && OtherActor != GetInstigator())
+	//{
+	//	UTLAttributeComponent* AttributeComp = Cast< UTLAttributeComponent>(OtherActor->GetComponentByClass(UTLAttributeComponent::StaticClass()));
+
+	//	if(AttributeComp)
+	//	{
+	//		// minus in front of DamageAmount to apply the change as damage, not healing
+	//		AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
+
+	//		// Only explode when we hit something valid
+	//		Explode();
+	//	}
+	//}
+
+	if(UTLGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 	{
-		UTLAttributeComponent* AttributeComp = Cast< UTLAttributeComponent>(OtherActor->GetComponentByClass(UTLAttributeComponent::StaticClass()));
-
-		if(AttributeComp)
-		{
-			// minus in front of DamageAmount to apply the change as damage, not healing
-			AttributeComp->ApplyHealthChange(GetInstigator(), -DamageAmount);
-
-			// Only explode when we hit something valid
-			Explode();
-		}
+		Explode();
 	}
 }
 

@@ -35,6 +35,9 @@ protected:
 	UFUNCTION()
 	void OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus);
 
+	UFUNCTION()
+	void RespawnPlayerElapsed(AController* Controller);
+
 	UPROPERTY(EditDefaultsOnly, Category = "AI")
 	UEnvQuery* SpawnBotQuery;
 
@@ -42,6 +45,8 @@ protected:
 	UCurveFloat* DifficultyCurve;
 
 public:
+
+	virtual void OnActorKilled(AActor* VictimActor, AActor* Killer);
 
 	ATLGameModeBase();
 

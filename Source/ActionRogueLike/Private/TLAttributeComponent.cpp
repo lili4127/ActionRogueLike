@@ -3,6 +3,10 @@
 
 #include "TLAttributeComponent.h"
 
+#include "TLGameModeBase.h"
+
+static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("tl.DamageMultiplier"), 1.0f, TEXT("Global damage modifier for Attribute Component"), ECVF_Cheat);
+
 // Sets default values for this component's properties
 UTLAttributeComponent::UTLAttributeComponent()
 {
@@ -49,9 +53,15 @@ bool UTLAttributeComponent::Kill(AActor* InstigatorActor)
 bool UTLAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {
 
-	if(!GetOwner()->CanBeDamaged())
+	if(!GetOwner()->CanBeDamaged() && Delta < 0.0f)
 	{
 		return false;
+	}
+
+	if(Delta < 0.0f)
+	{
+		float DamageMultiplier = CVarDamageMultiplier.GetValueOnGameThread();
+		Delta *= DamageMultiplier;
 	}
 
 	float OldHealth = Health;
@@ -59,6 +69,17 @@ bool UTLAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Del
 
 	float ActualDelta = Health - OldHealth;
 	OnHealthChanged.Broadcast(InstigatorActor, this, Health, ActualDelta);
+
+	//Died
+	if(ActualDelta < 0.0f && Health == 0.0f)
+	{
+		ATLGameModeBase* GM = Cast<ATLGameModeBase>(GetWorld()->GetAuthGameMode<ATLGameModeBase>());
+
+		if(GM)
+		{
+			GM->OnActorKilled(GetOwner(), InstigatorActor);
+		}
+	}
 
 	return ActualDelta != 0;
 }
