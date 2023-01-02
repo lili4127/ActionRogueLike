@@ -148,12 +148,17 @@ void ATLCharacter::PrimaryInteract()
 
 void ATLCharacter::OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta)
 {
-
+	//Damaged
 	if (Delta < 0.0f)
 	{
 		GetMesh()->SetScalarParameterValueOnMaterials(TimeToHitParamName, GetWorld()->TimeSeconds);
+
+		// Rage added equal to damage received (Abs to turn into positive rage number)
+		float RageDelta = FMath::Abs(Delta);
+		AttributeComp->ApplyRage(InstigatorActor, RageDelta);
 	}
 
+	//Died
 	if(NewHealth <= 0.0f && Delta < 0.0f)
 	{
 		APlayerController* PC = Cast<APlayerController>(GetController());

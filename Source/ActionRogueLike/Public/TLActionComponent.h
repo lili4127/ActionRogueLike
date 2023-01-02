@@ -9,16 +9,27 @@
 
 class UTLAction;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnActionStateChanged, UTLActionComponent*, OwningComp, UTLAction*, Action);
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONROGUELIKE_API UTLActionComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
-public:	
-	UTLActionComponent();
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tags")
+	FGameplayTagContainer ActiveGameplayTags;
 
 	UFUNCTION(BlueprintCallable, Category = "Actions")
 	void AddAction(AActor* Instigator, TSubclassOf<UTLAction> ActionClass);
+
+	UFUNCTION(BlueprintCallable, Category = "Actions")
+	void RemoveAction(UTLAction* ActionToRemove);
+
+	/* Returns first occurrence of action matching the class provided */
+	UFUNCTION(BlueprintCallable, Category = "Actions")
+	UTLAction* GetAction(TSubclassOf<UTLAction> ActionClass) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Actions")
 	bool StartActionByName(AActor* Instigator, FName ActionName);
@@ -26,22 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Actions")
 	bool StopActionByName(AActor* Instigator, FName ActionName);
 
-	UFUNCTION(BlueprintCallable, Category = "Actions")
-	void RemoveAction(UTLAction* ActionToRemove);
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Tags")
-	FGameplayTagContainer ActiveGameplayTags;
-
+	UTLActionComponent();
 
 protected:
-	virtual void BeginPlay() override;
-
-	//Granted Abilities at Game Start
-	UPROPERTY(EditAnywhere, Category="Actions")
-	TArray<TSubclassOf<UTLAction>> DefaultActions;
-
-	UPROPERTY()
-	TArray<UTLAction*> Actions;
 
 	UFUNCTION(Server, Reliable)
 	void ServerStartAction(AActor* Instigator, FName ActionName);
@@ -49,8 +47,26 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerStopAction(AActor* Instigator, FName ActionName);
 
-public:	
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	/* Granted abilities at game start */
+	UPROPERTY(EditAnywhere, Category = "Actions")
+	TArray<TSubclassOf<UTLAction>> DefaultActions;
 
-		
+	UPROPERTY(BlueprintReadOnly, Replicated)
+	TArray<UTLAction*> Actions;
+
+	virtual void BeginPlay() override;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+public:
+
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStateChanged OnActionStarted;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnActionStateChanged OnActionStopped;
+
+	bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 };

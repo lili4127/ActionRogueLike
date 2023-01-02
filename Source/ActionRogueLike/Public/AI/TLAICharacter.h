@@ -18,35 +18,58 @@ class ACTIONROGUELIKE_API ATLAICharacter : public ACharacter
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
+
 	ATLAICharacter();
 
 protected:
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components")
-	UTLActionComponent* ActionComp;
-
-	UPROPERTY(VisibleAnywhere, Category = "Components")
-	UPawnSensingComponent* PawnSensingComponent;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
-	UTLAttributeComponent* AttributeComp;
-
+	UPROPERTY()
 	UTLUserWidget* ActiveHealthBar;
 
-	UPROPERTY(EditDefaultsOnly, Category="UI")
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> HealthBarWidgetClass;
 
-	UPROPERTY(VisibleAnywhere, Category="Effects")
+	/* Widget to display when bot first sees a player. */
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> SpottedWidgetClass;
+
+	/* Material parameter for Hitflashes */
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
 	FName TimeToHitParamName;
 
+	/* Key for AI Blackboard 'TargetActor' */
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName TargetActorKey;
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
 	void SetTargetActor(AActor* NewTarget);
+
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	AActor* GetTargetActor() const;
 
 	virtual void PostInitializeComponents() override;
 
 	UFUNCTION()
-	void OnPawnSeen(APawn* Pawn);
+	void OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta);
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UPawnSensingComponent* PawnSensingComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UTLAttributeComponent* AttributeComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UTLActionComponent* ActionComp;
 
 	UFUNCTION()
-	void OnHealthChanged(AActor* InstigatorActor, UTLAttributeComponent* OwningComp, float NewHealth, float Delta);
+	void OnPawnSeen(APawn* Pawn);
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void MulticastPawnSeen();
+
+	// -- Significance Manager -- //
+
+	/* Accessor for Blueprint to skip playing Audio or VFX based on significance thresholds */
+	//UFUNCTION(BlueprintPure, Category = "Optimization")
+	//bool IsSignificant(float RequiredSignificance = 0.0f) const;
 };
