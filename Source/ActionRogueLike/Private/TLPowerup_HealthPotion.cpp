@@ -2,14 +2,12 @@
 
 
 #include "TLPowerup_HealthPotion.h"
+#include "TLPlayerState.h"
 #include "TLAttributeComponent.h"
 
 ATLPowerup_HealthPotion::ATLPowerup_HealthPotion()
 {
-	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>("MeshComp");
-	// Disable collision, instead we use SphereComp to handle interaction queries
-	MeshComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MeshComp->SetupAttachment(RootComponent);
+	CreditCost = 50;
 }
 
 
@@ -21,13 +19,17 @@ void ATLPowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 	}
 
 	UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(InstigatorPawn);
+
 	// Check if not already at max health
 	if (ensure(AttributeComp) && !AttributeComp->IsFullHealth())
 	{
-		// Only activate if healed successfully
-		if (AttributeComp->ApplyHealthChange(this, AttributeComp->GetHealthMax()))
+		if (ATLPlayerState* PS = InstigatorPawn->GetPlayerState<ATLPlayerState>())
 		{
-			HideAndCooldownPowerup();
+			if (PS->RemoveCredits(CreditCost) && AttributeComp->ApplyHealthChange(this, AttributeComp->GetHealthMax()))
+			{
+				// Only activate if healed successfully
+				HideAndCooldownPowerup();
+			}
 		}
 	}
 }

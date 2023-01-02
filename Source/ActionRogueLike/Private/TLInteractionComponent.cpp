@@ -8,33 +8,19 @@
 
 static TAutoConsoleVariable<bool> CVarDebugDrawInteraction(TEXT("tl.InteractionDebugDraw"), false, TEXT("Enable Debug Lines For Interact Component"), ECVF_Cheat);
 
-// Sets default values for this component's properties
 UTLInteractionComponent::UTLInteractionComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
-
-// Called when the game starts
 void UTLInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
-	
 }
 
-
-// Called every frame
 void UTLInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
 }
 
 void UTLInteractionComponent::PrimaryInteract()
@@ -51,9 +37,6 @@ void UTLInteractionComponent::PrimaryInteract()
 
 	FCollisionObjectQueryParams ObjectQueryParams;
 	ObjectQueryParams.AddObjectTypesToQuery(ECC_WorldDynamic);
-
-	//FHitResult Hit;
-	//bool bBlockingHit = GetWorld()->LineTraceSingleByObjectType(Hit, EyeLocation , End, ObjectQueryParams);
 
 	TArray<FHitResult> Hits;
 	FCollisionShape Shape;

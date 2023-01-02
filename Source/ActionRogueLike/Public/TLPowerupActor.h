@@ -8,8 +8,9 @@
 #include "TLPowerupActor.generated.h"
 
 class USphereComponent;
+class UStaticMeshComponent;
 
-UCLASS()
+UCLASS(ABSTRACT)
 class ACTIONROGUELIKE_API ATLPowerupActor : public AActor, public ITLGameplayInterface
 {
 	GENERATED_BODY()
@@ -34,5 +35,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	USphereComponent* SphereComp;
+
+	UPROPERTY(VisibleAnywhere, Category = "Components")
+	UStaticMeshComponent* MeshComp;
 
 };
