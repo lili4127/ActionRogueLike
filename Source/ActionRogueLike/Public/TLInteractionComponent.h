@@ -6,6 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "TLInteractionComponent.generated.h"
 
+class UTLUserWidget;
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class ACTIONROGUELIKE_API UTLInteractionComponent : public UActorComponent
@@ -21,4 +22,24 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+	void FindBestInteractable();
+
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+	float TraceDistance;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+	float TraceRadius;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Trace")
+	TEnumAsByte<ECollisionChannel> CollisionChannel;
+
+	UPROPERTY()
+	AActor* FocusedActor;
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UTLUserWidget> DefaultWidgetClass;
+
+	UPROPERTY()
+	UTLUserWidget* DefaultWidgetInstance;
 };

@@ -8,6 +8,7 @@
 #include "TLGameplayFunctionLibrary.h"
 #include "Components/SphereComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "TLActionEffect.h"
 
 
 // Sets default values
@@ -35,6 +36,11 @@ void ATLMagicProjectile::OnActorOverlap(UPrimitiveComponent* OverlappedComponent
 		if (UTLGameplayFunctionLibrary::ApplyDirectionalDamage(GetInstigator(), OtherActor, DamageAmount, SweepResult))
 		{
 			Explode();
+
+			if(ActionComp)
+			{
+				ActionComp->AddAction(GetInstigator(), BurningActionClass);
+			}
 		}
 	}
 }

@@ -10,7 +10,7 @@ UTLActionComponent::UTLActionComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UTLActionComponent::AddAction(TSubclassOf<UTLAction> ActionClass)
+void UTLActionComponent::AddAction(AActor* Instigator, TSubclassOf<UTLAction> ActionClass)
 {
 	if(!ensure(ActionClass))
 	{
@@ -22,6 +22,11 @@ void UTLActionComponent::AddAction(TSubclassOf<UTLAction> ActionClass)
 	if(ensure(NewAction))
 	{
 		Actions.Add(NewAction);
+
+		if(NewAction->bAutoStart && ensure(NewAction->CanStart(Instigator)))
+		{
+			NewAction->StartAction(Instigator);
+		}
 	}
 }
 
@@ -65,13 +70,23 @@ bool UTLActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 	return false;
 }
 
+void UTLActionComponent::RemoveAction(UTLAction* ActionToRemove)
+{
+	if(!ensure(ActionToRemove && !ActionToRemove->IsRunning()))
+	{
+		return;
+	}
+
+	Actions.Remove(ActionToRemove);
+}
+
 void UTLActionComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
 	for(TSubclassOf<UTLAction> ActionClass : DefaultActions)
 	{
-		AddAction(ActionClass);
+		AddAction(GetOwner(), ActionClass);
 	}
 }
 

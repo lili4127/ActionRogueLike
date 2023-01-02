@@ -35,6 +35,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Action")
 	bool IsRunning() const;
 
+	/* Start immediately when added to an action component */
+	UPROPERTY(EditDefaultsOnly, Category = "Action")
+	bool bAutoStart;
+
 	UWorld* GetWorld() const override;
 
 protected:
