@@ -19,6 +19,8 @@ ATLPowerupActor::ATLPowerupActor()
 
 	RespawnTime = 10.0f;
 
+	SetReplicates(true);
+
 }
 
 void ATLPowerupActor::Interact_Implementation(APawn* InstigatorPawn)

@@ -38,11 +38,17 @@ protected:
 	// --
 	// Category = "" - display only for detail panels and blueprint context menu.
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category="Attributes")
 	float Health;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Attributes")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Replicated, Category = "Attributes")
 	float HealthMax;
+
+	UFUNCTION(NetMulticast, Reliable) // @note: could mark as unreliable once we moved the 'state' out of tlcharacter (eg. once its cosmetic only)
+	void MulticastHealthChanged(AActor* InstigatorActor, float NewHealth, float Delta);
+
+	//UFUNCTION(NetMulticast, Unreliable) // Used for cosmetic changes only
+	//void MulticastRageChanged(AActor* InstigatorActor, float NewRage, float Delta);
 
 public:
 

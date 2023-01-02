@@ -4,6 +4,7 @@
 #include "TLAttributeComponent.h"
 
 #include "TLGameModeBase.h"
+#include "Net/UnrealNetwork.h"
 
 static TAutoConsoleVariable<float> CVarDamageMultiplier(TEXT("tl.DamageMultiplier"), 1.0f, TEXT("Global damage modifier for Attribute Component"), ECVF_Cheat);
 
@@ -12,6 +13,8 @@ UTLAttributeComponent::UTLAttributeComponent()
 {
 	HealthMax = 100;
 	Health = HealthMax;
+
+	SetIsReplicatedByDefault(true);
 }
 
 UTLAttributeComponent* UTLAttributeComponent::GetAttributes(AActor* FromActor)
@@ -53,31 +56,40 @@ bool UTLAttributeComponent::Kill(AActor* InstigatorActor)
 bool UTLAttributeComponent::ApplyHealthChange(AActor* InstigatorActor, float Delta)
 {
 
-	if(!GetOwner()->CanBeDamaged() && Delta < 0.0f)
+	if (!GetOwner()->CanBeDamaged() && Delta < 0.0f)
 	{
 		return false;
 	}
 
-	if(Delta < 0.0f)
+	if (Delta < 0.0f)
 	{
 		float DamageMultiplier = CVarDamageMultiplier.GetValueOnGameThread();
 		Delta *= DamageMultiplier;
 	}
 
 	float OldHealth = Health;
-	Health = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
+	float NewHealth = FMath::Clamp(Health + Delta, 0.0f, HealthMax);
 
-	float ActualDelta = Health - OldHealth;
-	OnHealthChanged.Broadcast(InstigatorActor, this, Health, ActualDelta);
+	float ActualDelta = NewHealth - OldHealth;
 
-	//Died
-	if(ActualDelta < 0.0f && Health == 0.0f)
+	// Is Server?
+	if (GetOwner()->HasAuthority())
 	{
-		ATLGameModeBase* GM = Cast<ATLGameModeBase>(GetWorld()->GetAuthGameMode<ATLGameModeBase>());
+		Health = NewHealth;
 
-		if(GM)
+		if (ActualDelta != 0.0f)
 		{
-			GM->OnActorKilled(GetOwner(), InstigatorActor);
+			MulticastHealthChanged(InstigatorActor, Health, ActualDelta);
+		}
+
+		// Died
+		if (ActualDelta < 0.0f && Health == 0.0f)
+		{
+			ATLGameModeBase* GM = GetWorld()->GetAuthGameMode<ATLGameModeBase>();
+			if (GM)
+			{
+				GM->OnActorKilled(GetOwner(), InstigatorActor);
+			}
 		}
 	}
 
@@ -104,3 +116,18 @@ float UTLAttributeComponent::GetHealthMax() const
 	return HealthMax;
 }
 
+void UTLAttributeComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UTLAttributeComponent, Health);
+	DOREPLIFETIME(UTLAttributeComponent, HealthMax);
+
+	//DOREPLIFETIME(UTLAttributeComponent, Rage);
+	//DOREPLIFETIME(UTLAttributeComponent, RageMax);
+}
+
+void UTLAttributeComponent::MulticastHealthChanged_Implementation(AActor* InstigatorActor, float NewHealth, float Delta)
+{
+	OnHealthChanged.Broadcast(InstigatorActor, this, NewHealth, Delta);
+}

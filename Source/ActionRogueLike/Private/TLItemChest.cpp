@@ -3,6 +3,8 @@
 
 #include "TLItemChest.h"
 
+#include "Net/UnrealNetwork.h"
+
 // Sets default values
 ATLItemChest::ATLItemChest()
 {
@@ -13,11 +15,31 @@ ATLItemChest::ATLItemChest()
 	LidMesh->SetupAttachment(BaseMesh);
 
 	TargetPitch = 110.0f;
+
+	SetReplicates(true);
 }
 
 void ATLItemChest::Interact_Implementation(APawn* InstigatorPawn)
 {
-	LidMesh->SetRelativeRotation(FRotator(TargetPitch, 0, 0));
-	ITLGameplayInterface::Interact_Implementation(InstigatorPawn);
+	bLidOpened = !bLidOpened;
+	OnRep_LidOpened();
 }
 
+void ATLItemChest::OnActorLoaded_Implementation()
+{
+	OnRep_LidOpened();
+}
+
+
+void ATLItemChest::OnRep_LidOpened()
+{
+	float CurrPitch = bLidOpened ? TargetPitch : 0.0f;
+	LidMesh->SetRelativeRotation(FRotator(CurrPitch, 0, 0));
+}
+
+void ATLItemChest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATLItemChest, bLidOpened);
+}

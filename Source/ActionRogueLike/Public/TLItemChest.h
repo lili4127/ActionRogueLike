@@ -13,8 +13,6 @@ UCLASS()
 class ACTIONROGUELIKE_API ATLItemChest : public AActor, public ITLGameplayInterface
 {
 	GENERATED_BODY()
-
-	void Interact_Implementation(APawn* InstigatorPawn) override;
 	
 public:	
 	// Sets default values for this actor's properties
@@ -23,7 +21,17 @@ public:
 	UPROPERTY(EditAnywhere)
 	float TargetPitch;
 
+	void OnActorLoaded_Implementation();
+
+	void Interact_Implementation(APawn* InstigatorPawn) override;
+
 protected:
+
+	UPROPERTY(ReplicatedUsing = "OnRep_LidOpened", BlueprintReadOnly, SaveGame) // RepNotify
+	bool bLidOpened;
+
+	UFUNCTION()
+	void OnRep_LidOpened();
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* BaseMesh;

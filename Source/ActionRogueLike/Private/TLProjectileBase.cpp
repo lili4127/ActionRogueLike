@@ -36,6 +36,7 @@ ATLProjectileBase::ATLProjectileBase()
 	ImpactShakeInnerRadius = 250.0f;
 	ImpactShakeOuterRadius = 2500.0f;
 
+	SetReplicates(true);
 }
 
 // Called when the game starts or when spawned

@@ -32,17 +32,27 @@ void UTLActionComponent::AddAction(AActor* Instigator, TSubclassOf<UTLAction> Ac
 
 bool UTLActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
 {
-	for(UTLAction* Action : Actions)
+	//SCOPE_CYCLE_COUNTER(STAT_StartActionByName);
+
+	for (UTLAction* Action : Actions)
 	{
 		if (Action && Action->ActionName == ActionName)
 		{
-
-			if(!Action->CanStart(Instigator))
+			if (!Action->CanStart(Instigator))
 			{
-				FString FailedMsg = FString::Printf(TEXT("Failed to run %s"), *ActionName.ToString());
+				FString FailedMsg = FString::Printf(TEXT("Failed to run: %s"), *ActionName.ToString());
 				GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, FailedMsg);
 				continue;
 			}
+
+			// Is Client?
+			if (!GetOwner()->HasAuthority())
+			{
+				ServerStartAction(Instigator, ActionName);
+			}
+
+			// Bookmark for Unreal Insights
+			TRACE_BOOKMARK(TEXT("StartAction::%s"), *GetNameSafe(Action));
 
 			Action->StartAction(Instigator);
 			return true;
@@ -52,15 +62,21 @@ bool UTLActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
 	return false;
 }
 
+
 bool UTLActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 {
 	for (UTLAction* Action : Actions)
 	{
 		if (Action && Action->ActionName == ActionName)
 		{
-
-			if(Action->IsRunning())
+			if (Action->IsRunning())
 			{
+				// Is Client?
+				if (!GetOwner()->HasAuthority())
+				{
+					ServerStopAction(Instigator, ActionName);
+				}
+
 				Action->StopAction(Instigator);
 				return true;
 			}
@@ -69,6 +85,7 @@ bool UTLActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 
 	return false;
 }
+
 
 void UTLActionComponent::RemoveAction(UTLAction* ActionToRemove)
 {
@@ -88,6 +105,16 @@ void UTLActionComponent::BeginPlay()
 	{
 		AddAction(GetOwner(), ActionClass);
 	}
+}
+
+void UTLActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
+{
+	StartActionByName(Instigator, ActionName);
+}
+
+void UTLActionComponent::ServerStopAction_Implementation(AActor* Instigator, FName ActionName)
+{
+	StopActionByName(Instigator, ActionName);
 }
 
 void UTLActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
