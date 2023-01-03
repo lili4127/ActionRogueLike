@@ -3,6 +3,7 @@
 
 #include "TLAction.h"
 #include "TLActionComponent.h"
+#include "ActionRogueLike/ActionRogueLike.h"
 #include "Net/UnrealNetwork.h"
 
 void UTLAction::Initialize(UTLActionComponent* NewActionComp)

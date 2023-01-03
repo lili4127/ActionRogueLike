@@ -6,28 +6,36 @@
 #include "TLAction.h"
 #include "TLAction_ProjectileAttack.generated.h"
 
-
 class UAnimMontage;
 class UParticleSystem;
+class USoundBase;
 
 /**
- * 
+ *
  */
 UCLASS()
 class ACTIONROGUELIKE_API UTLAction_ProjectileAttack : public UTLAction
 {
 	GENERATED_BODY()
 
-public:
-
-	UTLAction_ProjectileAttack();
-
-	virtual void StartAction_Implementation(AActor* Instigator) override;
-
 protected:
+
+	/* Sphere radius of the sweep to find desired target under crosshair. Adjusts final projectile direction */
+	UPROPERTY(EditAnywhere, Category = "Targeting")
+	float SweepRadius;
+
+	/* Fallback distance when sweep finds no collision under crosshair. Adjusts final projectile direction */
+	UPROPERTY(EditAnywhere, Category = "Targeting")
+	float SweepDistanceFallback;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	TSubclassOf<AActor> ProjectileClass;
+
+	UPROPERTY(VisibleAnywhere, Category = "Effects")
+	FName HandSocketName;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	float AttackAnimDelay;
 
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UAnimMontage* AttackAnim;
@@ -36,12 +44,16 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Attack")
 	UParticleSystem* CastingEffect;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Attack")
-	float AttackAnimDelay;
-
-	UPROPERTY(VisibleAnywhere, Category = "Effects")
-	FName HandSocketName;
+	/* Sound Effect to play (Can be Wave or Cue) */
+	UPROPERTY(EditAnywhere, Category = "Attack")
+	USoundBase* CastingSound;
 
 	UFUNCTION()
 	void AttackDelay_Elapsed(ACharacter* InstigatorCharacter);
+
+public:
+
+	virtual void StartAction_Implementation(AActor* Instigator) override;
+
+	UTLAction_ProjectileAttack();
 };
