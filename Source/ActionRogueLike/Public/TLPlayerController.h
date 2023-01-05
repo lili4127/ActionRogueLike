@@ -22,14 +22,14 @@ class ACTIONROGUELIKE_API ATLPlayerController : public APlayerController
 
 protected:
 
-	/*UPROPERTY(EditDefaultsOnly, Category = "UI")
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
 	TSubclassOf<UUserWidget> PauseMenuClass;
 
 	UPROPERTY()
 	UUserWidget* PauseMenuInstance;
 
 	UFUNCTION(BlueprintCallable)
-	void TogglePauseMenu(); */
+	void TogglePauseMenu();
 
 	void SetupInputComponent() override;
 
