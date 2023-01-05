@@ -4,8 +4,9 @@
 #include "TLPowerupActor.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
-// Sets default values
+
 ATLPowerupActor::ATLPowerupActor()
 {
 	SphereComp = CreateDefaultSubobject<USphereComponent>("SphereComp");
@@ -18,14 +19,23 @@ ATLPowerupActor::ATLPowerupActor()
 	MeshComp->SetupAttachment(RootComponent);
 
 	RespawnTime = 10.0f;
+	bIsActive = true;
 
-	SetReplicates(true);
-
+	// Directly set bool instead of going through SetReplicates(true) within constructor,
+	// Only use SetReplicates() outside constructor
+	bReplicates = true;
 }
+
 
 void ATLPowerupActor::Interact_Implementation(APawn* InstigatorPawn)
 {
 	// logic in derived classes...
+}
+
+
+FText ATLPowerupActor::GetInteractText_Implementation(APawn* InstigatorPawn)
+{
+	return FText::GetEmpty();
 }
 
 
@@ -39,15 +49,27 @@ void ATLPowerupActor::HideAndCooldownPowerup()
 {
 	SetPowerupState(false);
 
-	FTimerHandle TimerHandle_RespawnTimer;
 	GetWorldTimerManager().SetTimer(TimerHandle_RespawnTimer, this, &ATLPowerupActor::ShowPowerup, RespawnTime);
 }
 
 void ATLPowerupActor::SetPowerupState(bool bNewIsActive)
 {
-	SetActorEnableCollision(bNewIsActive);
-
-	// Set visibility on root and all children
-	RootComponent->SetVisibility(bNewIsActive, true);
+	bIsActive = bNewIsActive;
+	OnRep_IsActive();
 }
 
+
+void ATLPowerupActor::OnRep_IsActive()
+{
+	SetActorEnableCollision(bIsActive);
+	// Set visibility on root and all children
+	RootComponent->SetVisibility(bIsActive, true);
+}
+
+
+void ATLPowerupActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATLPowerupActor, bIsActive);
+}

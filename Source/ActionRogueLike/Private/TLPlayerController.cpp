@@ -42,12 +42,12 @@
 //}
 
 
-//void ATLPlayerController::SetupInputComponent()
-//{
-//	Super::SetupInputComponent();
-//
-//	InputComponent->BindAction("PauseMenu", IE_Pressed, this, &ATLPlayerController::TogglePauseMenu);
-//}
+void ATLPlayerController::SetupInputComponent()
+{
+	Super::SetupInputComponent();
+
+	//InputComponent->BindAction("PauseMenu", IE_Pressed, this, &ATLPlayerController::TogglePauseMenu);
+}
 
 
 void ATLPlayerController::SetPawn(APawn* InPawn)
@@ -58,15 +58,15 @@ void ATLPlayerController::SetPawn(APawn* InPawn)
 }
 
 
-//void ATLPlayerController::BeginPlayingState()
-//{
-//	BlueprintBeginPlayingState();
-//}
-//
-//
-//void ATLPlayerController::OnRep_PlayerState()
-//{
-//	Super::OnRep_PlayerState();
-//
-//	OnPlayerStateReceived.Broadcast(PlayerState);
-//}
+void ATLPlayerController::BeginPlayingState()
+{
+	BlueprintBeginPlayingState();
+}
+
+
+void ATLPlayerController::OnRep_PlayerState()
+{
+	Super::OnRep_PlayerState();
+
+	OnPlayerStateReceived.Broadcast(PlayerState);
+}

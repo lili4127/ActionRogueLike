@@ -7,24 +7,28 @@
 #include "TLGameplayInterface.h"
 #include "TLPowerupActor.generated.h"
 
+
 class USphereComponent;
 class UStaticMeshComponent;
+
 
 UCLASS(ABSTRACT)
 class ACTIONROGUELIKE_API ATLPowerupActor : public AActor, public ITLGameplayInterface
 {
 	GENERATED_BODY()
-	
-public:	
-	// Sets default values for this actor's properties
-	ATLPowerupActor();
-
-	void Interact_Implementation(APawn* InstigatorPawn) override;
 
 protected:
 
+	UPROPERTY(ReplicatedUsing = "OnRep_IsActive")
+	bool bIsActive;
+
+	UFUNCTION()
+	void OnRep_IsActive();
+
 	UPROPERTY(EditAnywhere, Category = "Powerup")
 	float RespawnTime;
+
+	FTimerHandle TimerHandle_RespawnTimer;
 
 	UFUNCTION()
 	void ShowPowerup();
@@ -38,5 +42,15 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, Category = "Components")
 	UStaticMeshComponent* MeshComp;
+
+public:
+
+	void Interact_Implementation(APawn* InstigatorPawn) override;
+
+	FText GetInteractText_Implementation(APawn* InstigatorPawn);
+
+public:
+
+	ATLPowerupActor();
 
 };
