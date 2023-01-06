@@ -7,7 +7,7 @@
 #include "TLActionEffect.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class ACTIONROGUELIKE_API UTLActionEffect : public UTLAction
@@ -16,8 +16,6 @@ class ACTIONROGUELIKE_API UTLActionEffect : public UTLAction
 
 public:
 
-	UTLActionEffect();
-
 	void StartAction_Implementation(AActor* Instigator) override;
 
 	void StopAction_Implementation(AActor* Instigator) override;
@@ -25,15 +23,22 @@ public:
 protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	float Duration;
+		float Duration;
 
 	/* Time between 'ticks' to apply effect */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effect")
-	float Period;
+		float Period;
 
 	FTimerHandle PeriodHandle;
 	FTimerHandle DurationHandle;
 
 	UFUNCTION(BlueprintNativeEvent, Category = "Effect")
-	void ExecutePeriodicEffect(AActor* Instigator);
+		void ExecutePeriodicEffect(AActor* Instigator);
+
+public:
+
+	UFUNCTION(BlueprintCallable, Category = "Action")
+		float GetTimeRemaining() const;
+
+	UTLActionEffect();
 };

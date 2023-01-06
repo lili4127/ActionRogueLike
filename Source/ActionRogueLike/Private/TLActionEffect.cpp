@@ -3,11 +3,16 @@
 
 #include "TLActionEffect.h"
 #include "TLActionComponent.h"
+#include "GameFramework/GameStateBase.h"
+
+
+
 
 UTLActionEffect::UTLActionEffect()
 {
 	bAutoStart = true;
 }
+
 
 void UTLActionEffect::StartAction_Implementation(AActor* Instigator)
 {
@@ -30,6 +35,7 @@ void UTLActionEffect::StartAction_Implementation(AActor* Instigator)
 	}
 }
 
+
 void UTLActionEffect::StopAction_Implementation(AActor* Instigator)
 {
 	if (GetWorld()->GetTimerManager().GetTimerRemaining(PeriodHandle) < KINDA_SMALL_NUMBER)
@@ -48,6 +54,20 @@ void UTLActionEffect::StopAction_Implementation(AActor* Instigator)
 		Comp->RemoveAction(this);
 	}
 }
+
+
+float UTLActionEffect::GetTimeRemaining() const
+{
+	AGameStateBase* GS = GetWorld()->GetGameState<AGameStateBase>();
+	if (GS)
+	{
+		float EndTime = TimeStarted + Duration;
+		return EndTime - GS->GetServerWorldTimeSeconds();
+	}
+
+	return Duration;
+}
+
 
 void UTLActionEffect::ExecutePeriodicEffect_Implementation(AActor* Instigator)
 {

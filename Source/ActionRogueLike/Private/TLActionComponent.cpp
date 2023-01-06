@@ -1,13 +1,13 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #include "TLActionComponent.h"
 #include "TLAction.h"
-#include "ActionRogueLike/ActionRogueLike.h"
+#include "../ActionRoguelike.h"
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
 
-
 //DECLARE_CYCLE_STAT(TEXT("StartActionByName"), STAT_StartActionByName, STATGROUP_STANFORD);
-
 
 UTLActionComponent::UTLActionComponent()
 {
@@ -31,7 +31,6 @@ void UTLActionComponent::BeginPlay()
 	}
 }
 
-
 void UTLActionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	// Stop all
@@ -54,14 +53,14 @@ void UTLActionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FAc
 	//FString DebugMsg = GetNameSafe(GetOwner()) + " : " + ActiveGameplayTags.ToStringSimple();
 	//GEngine->AddOnScreenDebugMessage(-1, 0.0f, FColor::White, DebugMsg);
 
-	//Draw All Actions
- 	/*for (UTLAction* Action : Actions)
- 	{
- 		FColor TextColor = Action->IsRunning() ? FColor::Blue : FColor::White;
- 		FString ActionMsg = FString::Printf(TEXT("[%s] Action: %s"), *GetNameSafe(GetOwner()), *GetNameSafe(Action));
- 
- 		LogOnScreen(this, ActionMsg, TextColor, 0.0f);
- 	}*/
+	// Draw All Actions
+// 	for (UTLAction* Action : Actions)
+// 	{
+// 		FColor TextColor = Action->IsRunning() ? FColor::Blue : FColor::White;
+// 		FString ActionMsg = FString::Printf(TEXT("[%s] Action: %s"), *GetNameSafe(GetOwner()), *GetNameSafe(Action));
+// 
+// 		LogOnScreen(this, ActionMsg, TextColor, 0.0f);
+// 	}
 }
 
 
@@ -92,7 +91,6 @@ void UTLActionComponent::AddAction(AActor* Instigator, TSubclassOf<UTLAction> Ac
 		}
 	}
 }
-
 
 void UTLActionComponent::RemoveAction(UTLAction* ActionToRemove)
 {
@@ -175,18 +173,15 @@ bool UTLActionComponent::StopActionByName(AActor* Instigator, FName ActionName)
 	return false;
 }
 
-
 void UTLActionComponent::ServerStartAction_Implementation(AActor* Instigator, FName ActionName)
 {
 	StartActionByName(Instigator, ActionName);
 }
 
-
 void UTLActionComponent::ServerStopAction_Implementation(AActor* Instigator, FName ActionName)
 {
 	StopActionByName(Instigator, ActionName);
 }
-
 
 bool UTLActionComponent::ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags)
 {
@@ -201,7 +196,6 @@ bool UTLActionComponent::ReplicateSubobjects(class UActorChannel* Channel, class
 
 	return WroteSomething;
 }
-
 
 void UTLActionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
