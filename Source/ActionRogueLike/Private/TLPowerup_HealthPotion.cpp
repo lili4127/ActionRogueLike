@@ -5,6 +5,8 @@
 #include "TLPlayerState.h"
 #include "TLAttributeComponent.h"
 
+#define LOCTEXT_NAMESPACE "InteractableActors"
+
 ATLPowerup_HealthPotion::ATLPowerup_HealthPotion()
 {
 	CreditCost = 50;
@@ -34,3 +36,19 @@ void ATLPowerup_HealthPotion::Interact_Implementation(APawn* InstigatorPawn)
 	}
 }
 
+FText ATLPowerup_HealthPotion::GetInteractText_Implementation(APawn* InstigatorPawn)
+{
+
+	UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(InstigatorPawn);
+
+	// Check if not already at max health
+	if (ensure(AttributeComp) && AttributeComp->IsFullHealth())
+	{
+		return LOCTEXT("HealthPotion_FullHealthWarning", "Already at full health");
+	}
+
+	return FText::Format(LOCTEXT("HealthPotion_InteractMessage", "Cost {0} Credits, Restores Health To Maximum"), CreditCost);
+
+}
+
+#undef LOCTEXT_NAMESPACE
