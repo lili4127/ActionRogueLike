@@ -16,7 +16,9 @@ ATLItemChest::ATLItemChest()
 
 	TargetPitch = 110.0f;
 
-	SetReplicates(true);
+	// Directly set bool instead of going through SetReplicates(true) within constructor,
+	// Only use SetReplicates() outside constructor
+	bReplicates = true;
 }
 
 void ATLItemChest::Interact_Implementation(APawn* InstigatorPawn)

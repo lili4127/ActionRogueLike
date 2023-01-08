@@ -4,8 +4,8 @@
 
 #include "CoreMinimal.h"
 
-// Define new "stat command" group shown in-game via "stat stanford"
-//DECLARE_STATS_GROUP(TEXT("STANFORD_Game"), STATGROUP_STANFORD, STATCAT_Advanced);
+// Define new "stat command" group shown in-game via "stat tom"
+DECLARE_STATS_GROUP(TEXT("TOM_Game"), STATGROUP_TOM, STATCAT_Advanced);
 
 // Define category "LogGame"
 ACTIONROGUELIKE_API DECLARE_LOG_CATEGORY_EXTERN(LogGame, Log, All);

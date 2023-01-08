@@ -7,7 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Engine/ActorChannel.h"
 
-//DECLARE_CYCLE_STAT(TEXT("StartActionByName"), STAT_StartActionByName, STATGROUP_STANFORD);
+DECLARE_CYCLE_STAT(TEXT("StartActionByName"), STAT_StartActionByName, STATGROUP_TOM);
 
 UTLActionComponent::UTLActionComponent()
 {
@@ -119,7 +119,7 @@ UTLAction* UTLActionComponent::GetAction(TSubclassOf<UTLAction> ActionClass) con
 
 bool UTLActionComponent::StartActionByName(AActor* Instigator, FName ActionName)
 {
-	//SCOPE_CYCLE_COUNTER(STAT_StartActionByName);
+	SCOPE_CYCLE_COUNTER(STAT_StartActionByName);
 
 	for (UTLAction* Action : Actions)
 	{

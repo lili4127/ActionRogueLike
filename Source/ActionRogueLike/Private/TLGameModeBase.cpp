@@ -19,7 +19,7 @@
 #include "TLMonsterData.h"
 #include "../ActionRoguelike.h"
 #include "TLActionComponent.h"
-//#include "TLSaveGameSubsystem.h"
+#include "TLSaveGameSubsystem.h"
 #include "Engine/AssetManager.h"
 
 static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("tl.SpawnBots"), true, TEXT("Enable spawning of bots via timer."), ECVF_Cheat);
@@ -42,11 +42,11 @@ void ATLGameModeBase::InitGame(const FString& MapName, const FString& Options, F
 	Super::InitGame(MapName, Options, ErrorMessage);
 
 	// (Save/Load logic moved into new SaveGameSubsystem)
-	//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+	UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
 
 	// Optional slot name (Falls back to slot specified in SaveGameSettings class/INI otherwise)
-	//FString SelectedSaveSlot = UGameplayStatics::ParseOption(Options, "SaveGame");
-	//SG->LoadSaveGame(SelectedSaveSlot);
+	FString SelectedSaveSlot = UGameplayStatics::ParseOption(Options, "SaveGame");
+	SG->LoadSaveGame(SelectedSaveSlot);
 }
 
 
@@ -74,14 +74,14 @@ void ATLGameModeBase::StartPlay()
 void ATLGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	// Calling Before Super:: so we set variables before 'beginplayingstate' is called in PlayerController (which is where we instantiate UI)
-	//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
-	//SG->HandleStartingNewPlayer(NewPlayer);
+	UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+	SG->HandleStartingNewPlayer(NewPlayer);
 
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 
 	// Now we're ready to override spawn location
 	// Alternatively we could override core spawn location to use store locations immediately (skipping the whole 'find player start' logic)
-	//SG->OverrideSpawnTransform(NewPlayer);
+	SG->OverrideSpawnTransform(NewPlayer);
 }
 
 
@@ -345,9 +345,9 @@ void ATLGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 			PS->UpdatePersonalRecord(GetWorld()->TimeSeconds);
 		}
 
-		//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+		UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
 		// Immediately auto save on death
-		//SG->WriteSaveGame();
+		SG->WriteSaveGame();
 	}
 
 	// Give Credits for kill
