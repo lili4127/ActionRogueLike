@@ -2,22 +2,33 @@
 
 
 #include "TLGameModeBase.h"
-
-#include "DrawDebugHelpers.h"
-#include "TLAttributeComponent.h"
-#include "AI/TLAICharacter.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "EnvironmentQuery/EnvQueryTypes.h"
+#include "EnvironmentQuery/EnvQueryInstanceBlueprintWrapper.h"
+#include "AI/TLAICharacter.h"
+#include "TLAttributeComponent.h"
 #include "EngineUtils.h"
+#include "DrawDebugHelpers.h"
 #include "TLCharacter.h"
 #include "TLPlayerState.h"
+#include "TLSaveGame.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/GameStateBase.h"
+#include "TLGameplayInterface.h"
+#include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "TLMonsterData.h"
+#include "../ActionRoguelike.h"
+#include "TLActionComponent.h"
+//#include "TLSaveGameSubsystem.h"
+#include "Engine/AssetManager.h"
 
-static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("tl.SpawnBots"), true, TEXT("Enable spawning of bots via timer"), ECVF_Cheat);
+static TAutoConsoleVariable<bool> CVarSpawnBots(TEXT("tl.SpawnBots"), true, TEXT("Enable spawning of bots via timer."), ECVF_Cheat);
 
 ATLGameModeBase::ATLGameModeBase()
 {
 	SpawnTimerInterval = 2.0f;
 	CreditsPerKill = 20;
+	CooldownTimeBetweenFailures = 8.0f;
 
 	DesiredPowerupCount = 10;
 	RequiredPowerupDistance = 2000;
@@ -25,11 +36,26 @@ ATLGameModeBase::ATLGameModeBase()
 	PlayerStateClass = ATLPlayerState::StaticClass();
 }
 
+
+void ATLGameModeBase::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
+{
+	Super::InitGame(MapName, Options, ErrorMessage);
+
+	// (Save/Load logic moved into new SaveGameSubsystem)
+	//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+
+	// Optional slot name (Falls back to slot specified in SaveGameSettings class/INI otherwise)
+	//FString SelectedSaveSlot = UGameplayStatics::ParseOption(Options, "SaveGame");
+	//SG->LoadSaveGame(SelectedSaveSlot);
+}
+
+
 void ATLGameModeBase::StartPlay()
 {
 	Super::StartPlay();
 
-	//Continuous timer to spawn in bots
+	// Continuous timer to spawn in more bots.
+	// Actual amount of bots and whether its allowed to spawn determined by spawn logic later in the chain...
 	GetWorldTimerManager().SetTimer(TimerHandle_SpawnBots, this, &ATLGameModeBase::SpawnBotTimerElapsed, SpawnTimerInterval, true);
 
 	// Make sure we have assigned at least one power-up class
@@ -44,65 +70,130 @@ void ATLGameModeBase::StartPlay()
 	}
 }
 
+
+void ATLGameModeBase::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	// Calling Before Super:: so we set variables before 'beginplayingstate' is called in PlayerController (which is where we instantiate UI)
+	//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+	//SG->HandleStartingNewPlayer(NewPlayer);
+
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+	// Now we're ready to override spawn location
+	// Alternatively we could override core spawn location to use store locations immediately (skipping the whole 'find player start' logic)
+	//SG->OverrideSpawnTransform(NewPlayer);
+}
+
+
 void ATLGameModeBase::KillAll()
 {
 	for (TActorIterator<ATLAICharacter> It(GetWorld()); It; ++It)
 	{
 		ATLAICharacter* Bot = *It;
-		UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(Bot);
 
+		UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(Bot);
 		if (ensure(AttributeComp) && AttributeComp->IsAlive())
 		{
-			AttributeComp->Kill(this); // @fixme: pass in player for kill credit?
+			AttributeComp->Kill(this);
 		}
-
 	}
 }
 
+
 void ATLGameModeBase::SpawnBotTimerElapsed()
 {
-	if(!CVarSpawnBots.GetValueOnGameThread())
+	if (!CVarSpawnBots.GetValueOnGameThread())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Bot Spawning Disabled via cvar 'CVarSpawnBots'."));
 		return;
 	}
 
+	// Give points to spend
+	if (SpawnCreditCurve)
+	{
+		AvailableSpawnCredit += SpawnCreditCurve->GetFloatValue(GetWorld()->TimeSeconds);
+	}
+
+	if (CooldownBotSpawnUntil > GetWorld()->TimeSeconds)
+	{
+		// Still cooling down
+		return;
+	}
+
+	LogOnScreen(this, FString::Printf(TEXT("Available SpawnCredits: %f"), AvailableSpawnCredit));
+
+	// Count alive bots before spawning
 	int32 NrOfAliveBots = 0;
 	for (TActorIterator<ATLAICharacter> It(GetWorld()); It; ++It)
 	{
 		ATLAICharacter* Bot = *It;
-		UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(Bot);
 
+		UTLAttributeComponent* AttributeComp = UTLAttributeComponent::GetAttributes(Bot);
 		if (ensure(AttributeComp) && AttributeComp->IsAlive())
 		{
 			NrOfAliveBots++;
 		}
-
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("Found %i alive bots."), NrOfAliveBots);
 
-	float MaxBotCount = 10.0f;
-
-	if (DifficultyCurve)
-	{
-		MaxBotCount = DifficultyCurve->GetFloatValue(GetWorld()->TimeSeconds);
-	}
-
+	const float MaxBotCount = 40.0f;
 	if (NrOfAliveBots >= MaxBotCount)
 	{
 		UE_LOG(LogTemp, Log, TEXT("At maximum bot capacity. Skipping bot spawn."));
 		return;
 	}
 
+	if (MonsterTable)
+	{
+		// Reset before selecting new row
+		SelectedMonsterRow = nullptr;
+
+		TArray<FMonsterInfoRow*> Rows;
+		MonsterTable->GetAllRows("", Rows);
+
+		// Get total weight
+		float TotalWeight = 0;
+		for (FMonsterInfoRow* Entry : Rows)
+		{
+			TotalWeight += Entry->Weight;
+		}
+
+		// Random number within total random
+		int32 RandomWeight = FMath::RandRange(0.0f, TotalWeight);
+
+		//Reset
+		TotalWeight = 0;
+
+		// Get monster based on random weight
+		for (FMonsterInfoRow* Entry : Rows)
+		{
+			TotalWeight += Entry->Weight;
+
+			if (RandomWeight <= TotalWeight)
+			{
+				SelectedMonsterRow = Entry;
+				break;
+			}
+		}
+
+		if (SelectedMonsterRow && SelectedMonsterRow->SpawnCost >= AvailableSpawnCredit)
+		{
+			// Too expensive to spawn, try again soon
+			CooldownBotSpawnUntil = GetWorld()->TimeSeconds + CooldownTimeBetweenFailures;
+
+			LogOnScreen(this, FString::Printf(TEXT("Cooling down until: %f"), CooldownBotSpawnUntil), FColor::Red);
+			return;
+		}
+	}
+
 	// Run EQS to find valid spawn location
 	UEnvQueryInstanceBlueprintWrapper* QueryInstance = UEnvQueryManager::RunEQSQuery(this, SpawnBotQuery, this, EEnvQueryRunMode::RandomBest5Pct, nullptr);
-
 	if (ensure(QueryInstance))
 	{
 		QueryInstance->GetOnQueryFinishedEvent().AddDynamic(this, &ATLGameModeBase::OnBotSpawnQueryCompleted);
 	}
 }
+
 
 void ATLGameModeBase::OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
 {
@@ -113,15 +204,52 @@ void ATLGameModeBase::OnBotSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper
 	}
 
 	TArray<FVector> Locations = QueryInstance->GetResultsAsLocations();
-
-	if (Locations.IsValidIndex(0))
+	if (Locations.IsValidIndex(0) && MonsterTable)
 	{
+		if (UAssetManager* Manager = UAssetManager::GetIfValid())
 		{
-			GetWorld()->SpawnActor<AActor>(MonsterClass, Locations[0], FRotator::ZeroRotator);
-			DrawDebugSphere(GetWorld(), Locations[0], 50.0f, 20, FColor::Blue, false, 60.0f);
+			// Apply spawn cost
+			AvailableSpawnCredit -= SelectedMonsterRow->SpawnCost;
+
+			FPrimaryAssetId MonsterId = SelectedMonsterRow->MonsterId;
+
+			TArray<FName> Bundles;
+			FStreamableDelegate Delegate = FStreamableDelegate::CreateUObject(this, &ATLGameModeBase::OnMonsterLoaded, MonsterId, Locations[0]);
+			Manager->LoadPrimaryAsset(MonsterId, Bundles, Delegate);
 		}
 	}
 }
+
+
+void ATLGameModeBase::OnMonsterLoaded(FPrimaryAssetId LoadedId, FVector SpawnLocation)
+{
+	//LogOnScreen(this, "Finished loading.", FColor::Green);
+
+	UAssetManager* Manager = UAssetManager::GetIfValid();
+	if (Manager)
+	{
+		UTLMonsterData* MonsterData = Cast<UTLMonsterData>(Manager->GetPrimaryAssetObject(LoadedId));
+		if (MonsterData)
+		{
+			AActor* NewBot = GetWorld()->SpawnActor<AActor>(MonsterData->MonsterClass, SpawnLocation, FRotator::ZeroRotator);
+			if (NewBot)
+			{
+				LogOnScreen(this, FString::Printf(TEXT("Spawned enemy: %s (%s)"), *GetNameSafe(NewBot), *GetNameSafe(MonsterData)));
+
+				// Grant special actions, buffs etc.
+				UTLActionComponent* ActionComp = Cast<UTLActionComponent>(NewBot->GetComponentByClass(UTLActionComponent::StaticClass()));
+				if (ActionComp)
+				{
+					for (TSubclassOf<UTLAction> ActionClass : MonsterData->Actions)
+					{
+						ActionComp->AddAction(NewBot, ActionClass);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void ATLGameModeBase::OnPowerupSpawnQueryCompleted(UEnvQueryInstanceBlueprintWrapper* QueryInstance, EEnvQueryStatus::Type QueryStatus)
 {
@@ -182,35 +310,52 @@ void ATLGameModeBase::OnPowerupSpawnQueryCompleted(UEnvQueryInstanceBlueprintWra
 	}
 }
 
+
 void ATLGameModeBase::RespawnPlayerElapsed(AController* Controller)
 {
-	if(ensure(Controller))
+	if (ensure(Controller))
 	{
 		Controller->UnPossess();
+
 		RestartPlayer(Controller);
 	}
 }
 
+
 void ATLGameModeBase::OnActorKilled(AActor* VictimActor, AActor* Killer)
 {
-	UE_LOG(LogTemp, Log, TEXT("OnActorKilled: Victim : %s, Killer : %s"), *GetNameSafe(VictimActor), *GetNameSafe(Killer));
+	UE_LOG(LogTemp, Log, TEXT("OnActorKilled: Victim: %s, Killer: %s"), *GetNameSafe(VictimActor), *GetNameSafe(Killer));
 
+	// Handle Player death
 	ATLCharacter* Player = Cast<ATLCharacter>(VictimActor);
-
-	if(Player)
+	if (Player)
 	{
-		FTimerHandle TimerHandle_RespawnDelay;
-		FTimerDelegate Delegate;
-		Delegate.BindUFunction(this, "RespawnPlayerElapsed", Player->GetController());
+		// Disabled auto-respawn
+// 		FTimerHandle TimerHandle_RespawnDelay;
+// 		FTimerDelegate Delegate;
+// 		Delegate.BindUFunction(this, "RespawnPlayerElapsed", Player->GetController());
+// 
+// 		float RespawnDelay = 2.0f;
+// 		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDelay, false);
 
-		float RespawnDelay = 2.0f;
-		GetWorldTimerManager().SetTimer(TimerHandle_RespawnDelay, Delegate, RespawnDelay, false);
+		// Store time if it was better than previous record
+		ATLPlayerState* PS = Player->GetPlayerState<ATLPlayerState>();
+		if (PS)
+		{
+			PS->UpdatePersonalRecord(GetWorld()->TimeSeconds);
+		}
+
+		//UTLSaveGameSubsystem* SG = GetGameInstance()->GetSubsystem<UTLSaveGameSubsystem>();
+		// Immediately auto save on death
+		//SG->WriteSaveGame();
 	}
 
 	// Give Credits for kill
 	APawn* KillerPawn = Cast<APawn>(Killer);
-	if (KillerPawn)
+	// Don't credit kills of self
+	if (KillerPawn && KillerPawn != VictimActor)
 	{
+		// Only Players will have a 'PlayerState' instance, bots have nullptr
 		ATLPlayerState* PS = KillerPawn->GetPlayerState<ATLPlayerState>();
 		if (PS)
 		{
